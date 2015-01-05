@@ -2,6 +2,22 @@
 #include <string.h>
 #include <inttypes.h>
 
+#define MAG_IN	(1 << 5)
+
+void mcu_init();
+void uart_setup();
+void serial_print_char(unsigned char val) ;
+void serial_print(unsigned char* data) ;
+void serial_println(unsigned char* data) ;
+
+int main(void) {
+	mcu_init();
+	uart_setup();
+	while (1) {
+		serial_println("Yo YO rocky!!!");
+	}
+}
+
 void mcu_init() {
 	WDTCTL = WDTPW | WDTHOLD;	// Stop watchdog timer
 	// Setup system @ 16Mhz
@@ -43,12 +59,4 @@ void serial_print(unsigned char* data) {
 void serial_println(unsigned char* data) {
 	serial_print(data);
 	serial_print_char('\n');
-}
-
-int main(void) {
-	mcu_init();
-	uart_setup();
-	while (1) {
-		serial_println("Yo YO rocky!!!");
-	}
 }
