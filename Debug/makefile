@@ -9,6 +9,8 @@ CG_TOOL_ROOT := C:/Texas Instruments/ccsv6/tools/compiler/ti-cgt-msp430_4.4.2
 ORDERED_OBJS += \
 $(GEN_CMDS__FLAG) \
 "./main.obj" \
+"./ti/CC1100-CC2500.obj" \
+"./ti/TI_CC_spi.obj" \
 "../lnk_msp430g2553.cmd" \
 -l"libc.a" \
 
@@ -20,7 +22,9 @@ RMDIR := RMDIR /S/Q
 # All of the sources participating in the build are defined here
 -include sources.mk
 -include subdir_vars.mk
+-include ti/subdir_vars.mk
 -include subdir_rules.mk
+-include ti/subdir_rules.mk
 -include objects.mk
 
 ifneq ($(MAKECMDGOALS),clean)
@@ -140,8 +144,8 @@ Garage\ Door.hex: $(EXE_OUTPUTS)
 # Other Targets
 clean:
 	-$(RM) $(EXE_OUTPUTS__QUOTED)$(BIN_OUTPUTS__QUOTED)
-	-$(RM) "main.pp" 
-	-$(RM) "main.obj" 
+	-$(RM) "main.pp" "ti\CC1100-CC2500.pp" "ti\TI_CC_spi.pp" 
+	-$(RM) "main.obj" "ti\CC1100-CC2500.obj" "ti\TI_CC_spi.obj" 
 	-@echo 'Finished clean'
 	-@echo ' '
 
