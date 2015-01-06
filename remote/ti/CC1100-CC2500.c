@@ -614,3 +614,17 @@ void Radio_WakeUp()
   TI_CC_SPIStrobe(TI_CCxxx0_SFRX);          // flush the receive FIFO of any residual data
   TI_CC_SPIStrobe(TI_CCxxx0_SIDLE); // set IDLE
 }
+
+signed int Radio_getRssi(signed char rssi)
+{
+  /**
+  *  Convert the RSSI into absolute RSSI while keeping the 1/2 dB resolution.
+  *  The number will appear twice as large because the demical point is implied
+  *  between bit zero and bit one of the integer. For more information, please
+  *  see Jim Noxon's answer describing how to convert the raw value into
+  *  absolute here: http://e2e.ti.com/support/low_power_rf/f/156/t/100344.aspx
+  */
+  signed int dbm;
+  dbm = ((signed int)rssi) - TI_CCxxx0_RSSI_OFFSET;
+  return (dbm + 1) >> 1;
+}

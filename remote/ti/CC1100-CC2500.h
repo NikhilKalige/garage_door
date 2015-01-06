@@ -48,4 +48,4 @@ void RFSendPacket(char *, char);
 char RFReceivePacket(char *, char *, char *);
 void Radio_GotoSleep();
 void Radio_WakeUp();
-
+signed int Radio_getRssi(signed char rssi);

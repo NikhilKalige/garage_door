@@ -137,4 +137,5 @@
 #define TI_CCxxx0_READ_SINGLE  0x80
 #define TI_CCxxx0_READ_BURST   0xC0
 
-
+// RSSI offset value
+#define TI_CCxxx0_RSSI_OFFSET   74
