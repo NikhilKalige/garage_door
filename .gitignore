@@ -81,3 +81,4 @@ Debug
 targetConfigs
 .settings
 .launches
+*.cmd
