@@ -4,6 +4,7 @@
 #include "ti/include.h"
 
 #define MAG_IN	BIT4
+#define LED		BIT1
 #define DEBUG
 
 // time defs @ VLO = 12K/4 = 3KHz
@@ -19,6 +20,9 @@ void serial_println(unsigned char* data) ;
 void timera_setup();
 void timera_start(int time);
 void port_setup();
+void timer_led_start();
+void timer_led_stop();
+void timer_led_setup();
 
 volatile uint8_t flag;
 volatile uint8_t timer_flag;
@@ -42,6 +46,7 @@ int main(void) {
 	serial_println("RF Setup done !!");
 #endif
     timera_setup();
+    timer_led_setup();
 	__enable_interrupt();
 	while (1) {
 		Radio_GotoSleep();
@@ -51,10 +56,18 @@ int main(void) {
 		// turn on and poll the radio for 500ms
 		timera_start(msec_500);
 		__bis_SR_register(LPM3_bits);
-		if(mag_flag == 1)
+		if(mag_flag == 1) {
+#ifdef DEBUG
 			serial_println("Door open");
-		else
+#endif
+	    	timer_led_start();
+		}
+		else {
+			timer_led_stop();
+#ifdef DEBUG
 			serial_println("Door closed");
+#endif
+		}
 	}
 }
 
@@ -99,14 +112,28 @@ void timera_disable() {
 }
 
 void port_setup() {
-	P1DIR &= ~MAG_IN;
+	P2DIR |= LED;
 	// Setup pullup resistor
-	P1OUT |= MAG_IN;
-	P1REN |= MAG_IN;
+	//P1REN |= MAG_IN;
 	// Enable HtoL interrupt
-	P1IES |= MAG_IN;
-	P1IFG = 0;
-	P1IE |= MAG_IN;
+	P2SEL |= LED;
+	//P2SEL2 &= ~LED;
+}
+
+void timer_led_setup() {
+	TA1CTL |= TASSEL_1;
+	TA1CCR0 = 512-1;                             // PWM Period
+    //TA1CCTL1 = OUTMOD_7;                         // CCR1 reset/set
+  	TA1CCR1 = 124;                               // CCR1 PWM duty cycle
+	TA1CCTL1 |= OUTMOD_7;
+}
+
+void timer_led_start() {
+	TA1CTL |= MC_1;
+}
+
+void timer_led_stop() {
+	TA1CTL &= ~MC_1;
 }
 
 /* Define interrupt vector */

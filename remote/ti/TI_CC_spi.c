@@ -118,7 +118,8 @@ void TI_CC_SPISetup(void)
   TI_CC_CSn_PxOUT |= TI_CC_CSn_PIN;
   TI_CC_CSn_PxDIR |= TI_CC_CSn_PIN;         // /CS disable
 
-  P2SEL = 0x00;  // Make sure CSn works instead of crystal
+  P2SEL &= ~(TI_CC_CSn_PIN | BIT6);  // Make sure CSn works instead of crystal
+
   
   UCB0CTL1 |= UCSWRST;                      // **Disable USCI state machine**
   UCB0CTL0 |= UCMST+UCCKPH+UCMSB+UCSYNC;    // 3-pin, 8-bit SPI master
