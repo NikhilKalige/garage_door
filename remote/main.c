@@ -22,8 +22,10 @@ void port_setup();
 
 volatile uint8_t flag;
 volatile uint8_t timer_flag;
+volatile uint8_t mag_flag;
 uint8_t val;
 char tx_packet[3] = {2, 0x01, 0x00};
+char rxBuffer[12];
 
 int main(void) {
 	mcu_init();
@@ -42,36 +44,24 @@ int main(void) {
     timera_setup();
 	__enable_interrupt();
 	while (1) {
+		Radio_GotoSleep();
 		timera_start(msec_500);
 		__bis_SR_register(LPM3_bits);
-		if(flag) {
-			flag = 0;
-			if(!(P1IN & MAG_IN)) {
-#ifdef DEBUG
-				serial_println("Mag in range");
-#endif
-				tx_packet[2] = 0xAA;
-			}
-			else {
-#ifdef DEBUG
-				serial_println("Mag went out of range");
-#endif
-				tx_packet[2] = 0xEE;
-			}
-			if(!(P1IN & MAG_IN))
-				P1IES &= ~MAG_IN;
-			else
-				P1IES |= MAG_IN;
-			P1IE |= MAG_IN;
-		}
-		RFSendPacket(tx_packet, 3);
+		Radio_WakeUp();
+		// turn on and poll the radio for 500ms
+		timera_start(msec_500);
+		__bis_SR_register(LPM3_bits);
+		if(mag_flag == 1)
+			serial_println("Door open");
+		else
+			serial_println("Door closed");
 	}
 }
 
 void mcu_init() {
 	WDTCTL = WDTPW | WDTHOLD;	// Stop watchdog timer
 	// Setup system @ 16Mhz
-/*
+	/*
 	if (CALBC1_16MHZ == 0xFF)	{			// If calibration constant erased
 		while (1);                               // do not load, trap CPU!!
 	}
@@ -79,7 +69,16 @@ void mcu_init() {
 	BCSCTL1 = CALBC1_16MHZ | DIVA_2;                   // Set range and ACLK at VLO/4
 	BCSCTL3 |= LFXT1S_2;
 	DCOCTL = CALDCO_16MHZ;                    // Set DCO step + modulation
-*/
+ 	*/
+
+	// Setup @1MHz
+	if (CALBC1_1MHZ==0xFF) {				// If calibration constant erased
+	    while(1);                               // do not load, trap CPU!!
+	}
+	DCOCTL = 0;                               // Select lowest DCOx and MODx settings
+	BCSCTL1 = CALBC1_1MHZ;                    // Set DCO
+	DCOCTL = CALDCO_1MHZ;
+
 	BCSCTL1 |=  DIVA_2;                   // Set range and ACLK at VLO/4
 	BCSCTL3 |= LFXT1S_2;
 }
@@ -120,11 +119,23 @@ __interrupt void Port_1(void) {
 
 #pragma vector=PORT2_VECTOR
 __interrupt void Port_2(void) {
-	P2IFG = 0;
+	if(TI_CC_GDO0_PxIFG & TI_CC_GDO0_PIN) {
+		char status[2];
+		char len = 11;
+		if(RFReceivePacket(rxBuffer,&len,status)) {
+			if(rxBuffer[1] == 0xEE)
+				mag_flag = 1;
+			else
+				mag_flag = 0;
+		}
+	}
+	TI_CC_GDO0_PxIFG &= ~TI_CC_GDO0_PIN;      // After pkt RX, this flag is set.
+	__bic_SR_register_on_exit(LPM3_bits);
 }
 
+
 #pragma vector=TIMER0_A1_VECTOR
-__interrupt void timerb(void) {
+__interrupt void timer_interrupt(void) {
 	uint8_t int_val;
 	int_val = TA0IV;
 	if(int_val & TA1IV_TAIFG) {
@@ -148,7 +159,7 @@ void uart_setup() {
 	// setup uart 9600 baud @1MHz
     UCA0BR0 = 104;
     UCA0BR1 = 0;
-    UCA0MCTL = UCBRS_1;
+    UCA0MCTL = UCBRS0;
 
 	UCA0CTL1 &= ~UCSWRST;
 	//IE2 |= UCA0RXIE ;

@@ -462,9 +462,9 @@ void RF_init()
   TI_CC_SW_PxIFG = 0x00;
   //TI_CC_SW_PxIE |= TI_CC_SW1;                // Activate interrupt enables
   
- // TI_CC_GDO0_PxIES |= TI_CC_GDO0_PIN;       // Int on falling edge (end of pkt)
-  //TI_CC_GDO0_PxIFG &= ~TI_CC_GDO0_PIN;      // Clear flag
-  //TI_CC_GDO0_PxIE |= TI_CC_GDO0_PIN;        // Enable int on end of packet
+  TI_CC_GDO0_PxIES |= TI_CC_GDO0_PIN;       // Int on falling edge (end of pkt)
+  TI_CC_GDO0_PxIFG &= ~TI_CC_GDO0_PIN;      // Clear flag
+  TI_CC_GDO0_PxIE |= TI_CC_GDO0_PIN;        // Enable int on end of packet
 
   TI_CC_SPIStrobe(TI_CCxxx0_SRX);           // Initialize CCxxxx in RX mode.
                                             // When a pkt is received, it will
@@ -612,7 +612,9 @@ void Radio_WakeUp()
   TI_CC_SPIWriteReg(TI_CCxxx0_TEST0, 0x0B); // Various test settings.
     
   TI_CC_SPIStrobe(TI_CCxxx0_SFRX);          // flush the receive FIFO of any residual data
-  TI_CC_SPIStrobe(TI_CCxxx0_SIDLE); // set IDLE
+  //TI_CC_SPIStrobe(TI_CCxxx0_SIDLE); // set IDLE
+  TI_CC_SPIStrobe(TI_CCxxx0_SRX); // Change state to RX
+
 }
 
 signed int Radio_getRssi(signed char rssi)
